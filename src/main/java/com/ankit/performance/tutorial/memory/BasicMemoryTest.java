@@ -4,7 +4,8 @@ import com.ankit.performance.tutorial.memory.model.Student;
 import java.util.HashMap;
 import java.util.Map;
 
-// VM args ::  -Xms50m -Xmx50m -Xloggc:gc.log -XX:+UseG1GC
+// VM args ::  -Xms50m -Xmx50m -XX:+PrintGCDetails -Xss1m -Xloggc:gc.log -XX:+UseG1GC
+//key takeaways file - basic-memory.md
 
 public class BasicMemoryTest {
   static Map<Integer, Student> map = new HashMap<Integer, Student>();
@@ -12,6 +13,7 @@ public class BasicMemoryTest {
   public static void main(String[] args) throws InterruptedException {
     printAvailableCores();
     printMemoryUtilization();
+    //fillStack(5);
     fillMemory(20000000);
     Thread.sleep(2000);
     printMemoryUtilization();
@@ -39,10 +41,28 @@ public class BasicMemoryTest {
         String.format("Max: %s, Total: %s, Free: %s, Used: %s", max, total, free, (total - free)));
   }
 
-  public static void fillMemory(int n) {
+  public static void fillMemory(int n) throws InterruptedException {
     int j = 0;
     for (int i = 0; i < n; i++) {
+      if (i == 200000) {
+        /*
+        the Old Generation is almost full, indicating that,
+        even with a Full GC, the Old Generation is ever-growing, a clear sign of a memory leak.
+        */
+        printMemoryUtilization();
+        Thread.sleep(20000);
+      }
       map.put(j++, new Student(i, "test-" + i, "99" + i));
     }
   }
+
+  /**
+   * Parameters and local variables are allocated on the stack (with reference types,
+   * the object lives on the heap and a variable in the stack references that object on the heap).
+   */
+  public static int fillStack(int number) throws InterruptedException {
+    Thread.sleep(1);
+    return number * fillStack(number - 1);
+  }
+
 }
